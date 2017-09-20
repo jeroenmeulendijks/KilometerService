@@ -46,6 +46,8 @@ public class Database {
     }
     
     public void addRecord(String filename, Date date, GeoLocation location, int milage) {
+        removeIfExists(date);
+
         try {
             Class.forName("org.sqlite.JDBC");
             try (Connection conn = DriverManager.getConnection("jdbc:sqlite:test.db");
@@ -71,6 +73,26 @@ public class Database {
         }
     }
     
+    private void removeIfExists(Date date) {
+        try {
+            Class.forName("org.sqlite.JDBC");
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+
+                PreparedStatement prep = conn.prepareStatement("DELETE FROM images WHERE fileDate = ?;");
+
+                prep.setString(1, myDateFormat.format(date));
+                prep.addBatch();
+
+                conn.setAutoCommit(false);
+                prep.executeBatch();
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            // No handling needed
+            System.out.println(String.format("Failed to add to database: %s", e.getLocalizedMessage()));
+        }
+    }
+
     public boolean recordExists(String filename) {
         boolean foundRecord = false;
         

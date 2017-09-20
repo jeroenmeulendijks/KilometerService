@@ -6,6 +6,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -43,7 +45,15 @@ public class RestInterface {
                 DateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
                 String destinationName = child.getParentFile().getAbsolutePath() + "\\" + df.format(fileDate) + ".jpeg";
 
-                if (!db.recordExists(destinationName)) {
+                Pattern r = Pattern.compile("\\d{8}_\\d{6}_(\\d+).jpeg");
+                Matcher m = r.matcher(child.getName());
+
+                if (m.find()) {
+                    lastKnownMilage = Integer.parseInt(m.group(1));
+                    db.addRecord(destinationName, fileDate, info.getLocation(), lastKnownMilage);
+                    child.renameTo(new File(destinationName));
+                }
+                else if (!db.recordExists(destinationName)) {
                     lastKnownMilage = info.getMilage(lastKnownMilage);
                     db.addRecord(destinationName, fileDate, info.getLocation(), lastKnownMilage);
                     child.renameTo(new File(destinationName));
